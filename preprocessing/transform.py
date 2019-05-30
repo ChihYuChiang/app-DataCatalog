@@ -1,9 +1,11 @@
-import pandas as pd
 import json
+import pickle
+import pandas as pd
 import re
 import nltk
 from gensim.models import TfidfModel
 from gensim.corpora import Dictionary
+from nltk.stem.snowball import SnowballStemmer
 
 
 
@@ -23,23 +25,31 @@ ats = df['title'].str.cat(df['overview'], sep='. ').str.cat(df['description'], s
 
 
 #--POS tagging and filter
+#TODO: Update tagging and so on to module
 #Tokenize and tag
 ats_token = [nltk.word_tokenize(at) for at in ats]
 ats_tag = [nltk.pos_tag(at) for at in ats_token]
 
-#Combine NNP
+#Apply stemmer for singular
+stemmer = SnowballStemmer('english').stem
+def stem(stemmer, at):
+    at_stemmed = [(stemmer(word), tag) for (word, tag) in at]
+    return at_stemmed
+
+#Combine NNP while leave individual words
 def combineNNP(at):
     at.append(('$', 'END'))
     at_combinedNNP = []
     word_prev, tag_prev = '', ''
     for (word, tag) in at:
-        if tag == 'NNP' and tag_prev == 'NNP':
+        at_combinedNNP.append((word, tag))
+
+        if tag_prev == 'NNP' and tag == 'NNP':
             word_prev = word_prev + '_' + word
             continue
 
-        if tag != 'NNP':
-            if tag_prev == 'NNP': at_combinedNNP.append((word_prev, tag_prev))
-            at_combinedNNP.append((word, tag))
+        if tag_prev == 'NNP' and tag != 'NNP':
+            at_combinedNNP.append((word_prev, tag_prev))
 
         word_prev, tag_prev = word, tag
         
@@ -63,18 +73,24 @@ def filterSWords(sWords, at):
 
 #Combine POS and word
 def appendTag(at):
-    at_tagAppended = (word + '_' + tag for (word, tag) in at)
+    def replaceNNS(tag):
+        if tag == 'NNS': return 'NN'
+        else: return tag
+
+    at_tagAppended = (word + '_' + replaceNNS(tag) for (word, tag) in at)
     return at_tagAppended
 
 #Execution
-sWords = ['https']
+sWords = ['https', 'kaggle', 'socrata', 'data', 'api', 'file', 'unsplash']
 ats_filtered = [list(
+    stem(stemmer,
     filterSWords(sWords,
     filter8LowerWord('^[a-zA-Z0-9_\-]+$',
     filterTag(['NN', 'NNP', 'NNS'],
     combineNNP(at
-))))) for at in ats_tag]
+)))))) for at in ats_tag]
 ats_tagAppended = [list(appendTag(at)) for at in ats_filtered]
+ats_tagAppended[0]
 
 
 #--Tf-idf
@@ -96,7 +112,7 @@ def filterTfIdf(at, threshold, dct):
     at_tfIdfFiltered = ((dct[idx], score) for (idx, score) in at if score >= threshold)
     return at_tfIdfFiltered
 
-ats_tfIdfFiltered = [list(filterTfIdf(at, 0.15, dct)) for at in ats_tfIdf]
+ats_tfIdfFiltered = [list(filterTfIdf(at, 0.10, dct)) for at in ats_tfIdf]
 
 
 #--Observation
@@ -105,15 +121,14 @@ def observe(idx):
     print('-' * 60)
     print(ats_tfIdfFiltered[idx])
 
-observe(170)
+observe(0)
 
 
 #--Export
-df_joined.to_csv('./data/df_joined.csv', index=False)
-with open('./data/dict_category.json', 'w') as f:
-    json.dump(dict_category, f)
+with open('./data/ats_tfIdfFiltered.pkl', 'wb') as f:  
+    pickle.dump(ats_tfIdfFiltered, f)
 
 #Test loading data back
-pd.read_csv('./data/df_joined.csv', index_col=False).head()
-with open('./data/dict_category.json', 'r') as f:
-    print(json.load(f))
+with open('./data/ats_tfIdfFiltered.pkl', 'rb') as f:  
+    ats_tfIdfFiltered = pickle.load(f)
+    print(ats_tfIdfFiltered[0])
