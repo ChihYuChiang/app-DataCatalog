@@ -27,7 +27,7 @@ df['tfIdf'] = ats_tfIdfFiltered
 
 
 #--Filter for top 1000 popular repo
-df_top = df.nlargest(100, 'numberOfViews')
+df_top = df.nlargest(2000, 'numberOfViews')
 ats_tfIdfFiltered = df_top['tfIdf']
 
 

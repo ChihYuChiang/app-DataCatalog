@@ -17,7 +17,7 @@ with open("./data/G_description.ftree", "r") as f:
 
 
 #--Community detection
-#Currently, using the online version
+#Currently, using the online version to produce the `ftree` file
 #https://github.com/mapequation/infomap/blob/master/examples/python/infomap-examples.ipynb
 def findCommunities(G):
     """
@@ -43,12 +43,14 @@ tree1 = findCommunities(G1)
 
 
 #--Relabeling ftree
+#ftree is plain string
 for k in mapping.keys():
     tree1 = re.sub('"{}"'.format(str(k + 1)), '"{}"'.format(mapping[k]), tree1)
 
 #Visualization
+#Note: "Trump XXX" could cause quotation trailing error when upload to the navigator server and could require manual removal.
 #https://www.mapequation.org/navigator/
 
 #Write to file
-with open("./data/G_description.ftree", "w") as f:
+with open("./data/G_description_labeled.ftree", "w") as f:
     f.write(tree1)
