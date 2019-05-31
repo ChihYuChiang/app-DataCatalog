@@ -22,11 +22,20 @@ with open('./data/ats_tfIdfFiltered.pkl', 'rb') as f:
     ats_tfIdfFiltered = pickle.load(f)
     print(ats_tfIdfFiltered[0])
 
-#TODO:Filter for top 2000 popular repo
+#Combine df and tfIdf data
+df['tfIdf'] = ats_tfIdfFiltered
+
+
+#--Filter for top 1000 popular repo
+df_top = df.nlargest(100, 'numberOfViews')
+ats_tfIdfFiltered = df_top['tfIdf']
 
 
 #--Dataset-node dict
-mapping = dict(zip(range(len(df)), df.iloc[:,-1].values))
+#The ids have to match the ids in the `ats`
+mapping = dict(zip(ats_tfIdfFiltered.index.values, df_top['title'].values))
+idx = list(mapping.keys())
+mapping_indirect = dict([(i, mapping[k]) for i, k in enumerate(idx)])
 
 
 #--Graph 1: Description graph
@@ -52,19 +61,22 @@ for idx_i, at_i in enumerate(ats_dfs):
 G1 = nx.from_numpy_array(edges, create_using=nx.Graph()) #Simple undirected graph
 
 #Relabeling nodes
-nx.relabel.relabel_nodes(G1, mapping, copy=False) #Relabel in place
+nx.relabel.relabel_nodes(G1, mapping_indirect, copy=False) #Relabel in place
 
 #Observe
 G1.number_of_nodes()
 G1.number_of_edges()
+G1.nodes.data()
 G1.edges.data()
 
 
 #TODO: --Graph 2: Tag graph
 
 
-#--Export graphs
-nx.write_pajek(G1, "./data/G_description.net")
+#--Export graphs and mapping
+nx.write_pajek(G1, "./data/g_description.net")
+with open('./data/mapping.pkl', 'wb') as f:  
+    pickle.dump(mapping_indirect, f)
 
 #Test loading graph back
-G1 = nx.read_pajek("./data/G_description.net")
+G1 = nx.read_pajek("./data/g_description.net")

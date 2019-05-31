@@ -1,3 +1,4 @@
+import re
 import networkx as nx
 from infomap import infomap #https://mapequation.github.io/infomap/
 
@@ -42,6 +43,12 @@ tree1 = findCommunities(G1)
 
 
 #--Relabeling ftree
-tree1
+for k in mapping.keys():
+    tree1 = re.sub('"{}"'.format(str(k + 1)), '"{}"'.format(mapping[k]), tree1)
+
+#Visualization
+#https://www.mapequation.org/navigator/
 
 #Write to file
+with open("./data/G_description.ftree", "w") as f:
+    f.write(tree1)
