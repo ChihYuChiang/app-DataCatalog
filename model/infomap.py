@@ -5,10 +5,18 @@ from infomap import infomap #https://mapequation.github.io/infomap/
 
 
 #--Loading data back
+#Graph and mapping
 G1 = nx.read_pajek("./data/G_description.net")
+with open('./data/mapping.pkl', 'rb') as f:  
+    mapping = pickle.load(f)
+
+#Tree
+with open("./data/G_description.ftree", "r") as f:
+    tree1 = f.read()
 
 
 #--Community detection
+#Currently, using the online version
 #https://github.com/mapequation/infomap/blob/master/examples/python/infomap-examples.ipynb
 def findCommunities(G):
     """
@@ -30,7 +38,10 @@ def findCommunities(G):
 
     return tree
 
-tree_description = findCommunities(G1)
+tree1 = findCommunities(G1)
 
 
-#--Export tree
+#--Relabeling ftree
+tree1
+
+#Write to file
