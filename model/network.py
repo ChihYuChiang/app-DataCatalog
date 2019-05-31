@@ -22,10 +22,11 @@ with open('./data/ats_tfIdfFiltered.pkl', 'rb') as f:
     ats_tfIdfFiltered = pickle.load(f)
     print(ats_tfIdfFiltered[0])
 
+#TODO:Filter for top 2000 popular repo
+
 
 #--Dataset-node dict
-mapping = dict(zip(G, string.ascii_lowercase))
-mapping = df[['title']]
+mapping = dict(zip(range(len(df)), df.iloc[:,-1].values))
 
 
 #--Graph 1: Description graph
@@ -48,7 +49,6 @@ for idx_i, at_i in enumerate(ats_dfs):
             edges[idx_i][idx_j] = np.sum(df_matchWord[['1_x', '1_y']].values)
 
 #Initiate graph from edge matrix
-#TODO: Assign node weights according to the dataset popularity 
 G1 = nx.from_numpy_array(edges, create_using=nx.Graph()) #Simple undirected graph
 
 #Relabeling nodes
@@ -60,11 +60,11 @@ G1.number_of_edges()
 G1.edges.data()
 
 
-#--Graph 2: Tag graph
+#TODO: --Graph 2: Tag graph
 
 
 #--Export graphs
-nx.write_pajek(G1, "G_description.net")
+nx.write_pajek(G1, "./data/G_description.net")
 
 #Test loading graph back
-G1 = nx.read_pajek("G_description.net")
+G1 = nx.read_pajek("./data/G_description.net")
